@@ -18,4 +18,4 @@ A challenging memory game where one mistake means game over. Test your memory wi
 
 ## Try It Out
 
-Play the game at: https://yourusername.github.io/roguelike-memory-game/
+Play the game at: https://rafaelmadeira.github.io/emoji-memory-game
