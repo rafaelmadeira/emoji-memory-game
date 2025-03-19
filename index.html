@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Memory Game 🧠</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #ffffff;
+            color: #333333;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background: #121212;
+            color: white;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            color: #333333;
+        }
+
+        body.dark-mode h1 {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        body.dark-mode h1 {
+            -webkit-background-clip: initial;
+            -webkit-text-fill-color: initial;
+            background: none;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1200px;
+            width: 90%;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        .game-info {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .game-info div {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 100px;
+            max-width: 180px;
+        }
+
+        body.dark-mode .game-info div {
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer {
+            font-weight: bold;
+            font-size: 1.5rem;
+            display: none; /* Hide the timer */
+        }
+
+        .timer.warning {
+            color: #e67e22;
+            display: none; /* Hide the timer */
+        }
+
+        .timer.danger {
+            color: #e74c3c;
+            animation: pulse 1s infinite;
+            display: none; /* Hide the timer */
+        }
+
+        body.dark-mode .timer.warning {
+            color: #fdbb2d;
+        }
+
+        body.dark-mode .timer.danger {
+            color: #f53844;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .game-board-container {
+            width: 100%;
+            overflow: hidden;
+            height: 400px; /* Fixed height instead of max-height */
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.dark-mode .game-board-container {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 0 !important; /* Remove all automatic gap */
+            grid-gap: 0 !important;
+            margin: 0 auto;
+            perspective: 1000px;
+            justify-content: center;
+            align-content: center; /* Center content vertically */
+            min-height: 200px;
+            position: relative; /* For absolute positioning */
+        }
+
+        .card {
+            position: absolute; /* Use absolute positioning for precise control */
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 0; /* Remove any margin */
+            padding: 0; /* Remove any padding */
+        }
+
+        body.dark-mode .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 2rem;
+        }
+
+        .card-front {
+            background-color: #546e7a;
+            transform: rotateY(180deg);
+            color: white;
+        }
+
+        .card-back {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            font-size: 1.5rem;
+            color: white; /* Ensure the "?" is always white */
+        }
+
+        body.dark-mode .card-front {
+            background-color: #546e7a;
+        }
+
+        body.dark-mode .card-back {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white; /* Redundant but included for clarity */
+        }
+
+        .message {
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            min-height: 30px;
+            width: 80%;
+            max-width: 700px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s;
+            opacity: 0;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        body.dark-mode .message {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.visible {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: flex-end;
+            width: 100%;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        #new-game-btn {
+            background-color: #e74c3c;
+            min-width: 50px;
+            width: 120px;
+            height: 50px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        #new-game-btn:hover {
+            background-color: #c0392b;
+        }
+
+        #theme-toggle-btn {
+            background-color: #444;
+            min-width: 50px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            padding: 0;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+
+        body.dark-mode #theme-toggle-btn {
+            background-color: #f1c40f;
+            color: #333;
+        }
+
+        .level-progress {
+            display: none; /* Hide the level progress bar completely */
+        }
+
+        .level-marker {
+            display: none; /* Hide the level markers */
+        }
+
+        .level-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.1);
+            margin-bottom: 5px;
+        }
+
+        body.dark-mode .level-dot {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .level-marker.active .level-dot {
+            background-color: #e74c3c;
+            box-shadow: 0 0 5px rgba(231, 76, 60, 0.7);
+        }
+
+        body.dark-mode .level-marker.active .level-dot {
+            background-color: #f53844;
+            box-shadow: 0 0 10px #f53844;
+        }
+
+        .level-marker.completed .level-dot {
+            background-color: #27ae60;
+        }
+
+        body.dark-mode .level-marker.completed .level-dot {
+            background-color: #2ecc71;
+        }
+
+        .game-rules {
+            background-color: rgba(0, 0, 0, 0.03);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            text-align: left;
+            width: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .game-rules {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .game-rules h3 {
+            margin-top: 0;
+            text-align: center;
+            color: #e67e22;
+        }
+
+        body.dark-mode .game-rules h3 {
+            color: #fdbb2d;
+        }
+
+        .game-rules ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .card-face {
+                font-size: 1.5rem;
+            }
+
+            .game-info {
+                gap: 10px;
+            }
+
+            .game-info div {
+                padding: 8px 15px;
+                font-size: 1rem;
+                min-width: 90px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-face {
+                font-size: 1.2rem;
+            }
+
+            .game-info div {
+                min-width: 80px;
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #333;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        body.dark-mode .close-modal:hover {
+            color: #fff;
+        }
+
+        /* Game buttons row */
+        .game-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .game-buttons button {
+            min-width: 120px;
+        }
+
+        #start-game-btn {
+            background-color: #27ae60;
+        }
+
+        #start-game-btn:hover {
+            background-color: #219653;
+        }
+
+        #how-to-play-btn {
+            background-color: #3498db;
+        }
+
+        #how-to-play-btn:hover {
+            background-color: #2980b9;
+        }
+
+        #reset-game-btn {
+            background-color: #e74c3c;
+        }
+
+        #reset-game-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Start level button that appears in the grid */
+        .start-button-container {
+            width: 100%;
+            height: 300px; /* Fixed height to ensure consistency */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #level-start-btn {
+            background-color: #27ae60;
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            min-width: 200px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            margin: 0 auto; /* Changed from 20px auto to 0 auto */
+            display: block;
+            text-align: center;
+        }
+
+        @keyframes pulse-button {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Add styling for the level start button when it appears outside the gameboard */
+        #level-start-btn-container {
+            position: fixed;
+            bottom: 100px; /* Position it above the message toast */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 90; /* Below the message toast but above other content */
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none; /* Initially disable interactions */
+        }
+
+        #level-start-btn-container.visible {
+            opacity: 1;
+            pointer-events: auto; /* Enable interactions when visible */
+        }
+    </style>
+</head>
+<body>
+    <button id="theme-toggle-btn" title="Toggle dark mode">☀️</button>
+    <h1>Emoji Memory Game 🧠</h1>
+    <p class="subtitle">No Mistakes Allowed</p>
+    
+    <div class="game-container">
+        <div class="game-buttons">
+            <button id="how-to-play-btn">How to Play</button>
+            <button id="reset-game-btn">Reset Game</button>
+        </div>
+        
+        <div class="game-info">
+            <div>Level <span id="level">1: 2x2</span></div>
+            <div>Found: <span id="pairs-found">0</span>/<span id="total-pairs">2</span></div>
+            <div style="display:none;">Time: <span id="timer" class="timer">00:00</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Best: <span id="high-score">0</span></div>
+        </div>
+        
+        <div class="game-board-container">
+            <div class="game-board" id="game-board"></div>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <!-- Game Rules Modal -->
+        <div id="rules-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>How to Play</h3>
+                <p>Find matching pairs of emojis to clear the board.</p>
+                <p>When the level starts, you'll have 5 seconds to memorize all cards.</p>
+                <p>Progress through 10 increasingly difficult levels (2x2 to 20x20).</p>
+                <p><strong style="color: #E74C3C;">One mistake and it's GAME OVER.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game state
+            let level = 1;
+            let score = 0;
+            let highScore = 0;
+            let flippedCards = [];
+            let matchedPairs = [];
+            let revealedPairs = []; // Tracks pairs that have been successfully matched
+            let isProcessing = false;
+            let gameTimer = null;
+            let timeLeft = 0;
+            let levelLayouts = []; // Store layouts for each level
+            let seed = Date.now(); // Seed for this game session (keeps layouts consistent)
+            let gameStarted = false;
+            
+            // DOM elements
+            const gameBoard = document.getElementById('game-board');
+            const messageEl = document.getElementById('message');
+            const levelEl = document.getElementById('level');
+            const gridSizeEl = document.getElementById('grid-size');
+            const scoreEl = document.getElementById('score');
+            const highScoreEl = document.getElementById('high-score');
+            const pairsFoundEl = document.getElementById('pairs-found');
+            const totalPairsEl = document.getElementById('total-pairs');
+            const timerEl = document.getElementById('timer');
+            const newGameBtn = document.getElementById('new-game-btn');
+            const startGameBtn = document.getElementById('start-game-btn');
+            const howToPlayBtn = document.getElementById('how-to-play-btn');
+            const resetGameBtn = document.getElementById('reset-game-btn');
+            const rulesModal = document.getElementById('rules-modal');
+            const closeModal = document.querySelector('.close-modal');
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            
+            // Game constants
+            const MAX_LEVEL = 10;
+            
+            // Emoji pool - we'll select from these to ensure no duplicates across pairs
+            const emojiPool = [
+                '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', 
+                '😋', '😎', '😍', '😘', '🥰', '😗', '😙', '😚', '🙂', '🤗',
+                '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥',
+                '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜',
+                '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '🙁',
+                '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩',
+                '🥺', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤯', '😵', '🥴',
+                '😠', '😡', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇',
+                '🥳', '🥸', '🤠', '🤡', '🤥', '🤫', '🤭', '🧐', '🤓', '😈',
+                '👻', '👽', '👾', '🤖', '💩', '😺', '😸', '😹', '😻', '😼',
+                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+                '🌞', '🌝', '🌛', '🌜', '🌚', '🌕', '🌖', '🌗', '🌘', '🌑',
+                '🌒', '🌓', '🌔', '🌙', '🌎', '🌍', '🌏', '🪐', '💫', '⭐',
+                '🌟', '✨', '⚡', '☄️', '💥', '🔥', '🌪', '🌈', '☀️', '🌤',
+                '⛅', '🌥', '☁️', '🌦', '🌧', '⛈', '🌩', '🌨', '❄️', '☃️',
+                '⛄', '🌬', '💨', '💧', '💦', '🌊', '🍏', '🍎', '🍐', '🍊',
+                '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍',
+                '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶', '🌽',
+                '🥕', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨'
+            ];
+            
+            // Seeded random number generator for consistent layouts within a game
+            function seededRandom() {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            }
+            
+            // Get grid size for a given level (2x2 for level 1, up to 20x20 for level 10)
+            function getGridSizeForLevel(level) {
+                return level * 2;
+            }
+            
+            // Initialize the game
+            function initGame() {
+                // Reset game state
+                level = 1;
+                score = 0;
+                seed = Date.now(); // New seed for a new game
+                levelLayouts = []; // Reset level layouts
+                gameStarted = false;
+                
+                // Generate layouts for all levels
+                for (let i = 1; i <= MAX_LEVEL; i++) {
+                    const gridSize = getGridSizeForLevel(i);
+                    const totalPairs = Math.floor((gridSize * gridSize) / 2);
+                    levelLayouts.push(generateUniqueCards(totalPairs));
+                }
+                
+                // Stop any existing timer
+                if (gameTimer) {
+                    clearInterval(gameTimer);
+                    gameTimer = null;
+                }
+                
+                // Update UI and setup first level
+                updateUI();
+                setupLevel(false); // Don't show preview automatically
+                
+                // Update button states
+                startGameBtn.textContent = "Start Game";
+                startGameBtn.disabled = false;
+            }
+            
+            // Setup a specific level
+            function setupLevel(showPreview = false) {
+                // Remove any existing level-start-btn that might be outside the game board
+                const existingNextBtn = document.getElementById('level-start-btn');
+                if (existingNextBtn) {
+                    existingNextBtn.parentNode.removeChild(existingNextBtn);
+                }
+                
+                flippedCards = [];
+                matchedPairs = [];
+                revealedPairs = []; // We don't need this anymore but keeping for compatibility
+                
+                // Remove timer display reset
+                timerEl.classList.remove('warning', 'danger');
+                
+                // Stop any existing timer (keeping this code for safety)
+                if (gameTimer) {
+                    clearInterval(gameTimer);
+                    gameTimer = null;
+                }
+                
+                // Set gameStarted to false when setting up a new level
+                gameStarted = false;
+                
+                // Calculate grid size based on level
+                const gridSize = getGridSizeForLevel(level);
+                
+                // Update the content in the game info display
+                levelEl.textContent = `${level}: ${gridSize}x${gridSize}`;
+                
+                // Remove updating gridSizeEl since we're combining it with the level
+                // gridSizeEl.textContent = `${gridSize}x${gridSize}`;
+                
+                // Calculate total pairs for this level
+                const totalPairs = Math.floor((gridSize * gridSize) / 2);
+                totalPairsEl.textContent = totalPairs;
+                pairsFoundEl.textContent = 0;
+                
+                // Clear the game board
+                gameBoard.innerHTML = '';
+                
+                // Create the game board differently based on the level
+                if (level === 1) {
+                    // For level 1, create a clean container for the start button
+                    gameBoard.style.display = 'flex';
+                    gameBoard.style.justifyContent = 'center';
+                    gameBoard.style.alignItems = 'center';
+                    // Don't change the game board height, to keep consistent container size
+                    gameBoard.style.width = '100%';
+                    
+                    const startLevelButton = document.createElement('button');
+                    startLevelButton.id = 'level-start-btn';
+                    startLevelButton.textContent = 'Start Game';
+                    startLevelButton.style.backgroundColor = '#27ae60';
+                    startLevelButton.style.fontSize = '1.5rem';
+                    startLevelButton.style.padding = '15px 30px';
+                    startLevelButton.style.minWidth = '200px';
+                    startLevelButton.style.borderRadius = '10px';
+                    startLevelButton.style.margin = '0 auto';
+                    startLevelButton.style.display = 'block';
+                    startLevelButton.style.textAlign = 'center';
+                    startLevelButton.style.cursor = 'pointer';
+                    startLevelButton.style.border = 'none';
+                    startLevelButton.style.color = 'white';
+                    startLevelButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    
+                    startLevelButton.addEventListener('mouseover', () => {
+                        startLevelButton.style.backgroundColor = '#219653';
+                        startLevelButton.style.transform = 'scale(1.05)';
+                        startLevelButton.style.boxShadow = '0 8px 15px rgba(0, 0, 0, 0.2)';
+                    });
+                    
+                    startLevelButton.addEventListener('mouseout', () => {
+                        startLevelButton.style.backgroundColor = '#27ae60';
+                        startLevelButton.style.transform = 'scale(1)';
+                        startLevelButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    });
+                    
+                    startLevelButton.addEventListener('click', () => {
+                        // Reset the game board's display to grid for the cards
+                        gameBoard.style.display = 'grid';
+                        gameBoard.style.justifyContent = 'center';
+                        gameBoard.style.alignItems = 'initial';
+                        // Don't change the minHeight to keep spacing consistent
+                        
+                        // Remove the start button
+                        gameBoard.innerHTML = '';
+                        
+                        // Create the grid and show preview
+                        createGameGrid(gridSize);
+                        showCardsPreview(gridSize);
+                    });
+                    
+                    gameBoard.appendChild(startLevelButton);
+                    
+                    // Show a message indicating what to do
+                    showMessage("Click 'Start Game' to begin!", 'warning');
+                } else if (showPreview) {
+                    // For levels after 1 when transitioning automatically, create the grid and show preview
+                    gameBoard.style.display = 'grid';
+                    createGameGrid(gridSize);
+                    showCardsPreview(gridSize);
+                } else {
+                    // For all other cases, create the grid with no preview
+                    gameBoard.style.display = 'grid';
+                    createGameGrid(gridSize);
+                }
+                
+                updateUI();
+            }
+            
+            // Generate unique cards for the level
+            function generateUniqueCards(totalPairs) {
+                // Create a shuffled copy of the emoji pool to ensure uniqueness
+                const shuffledEmojis = [...emojiPool];
+                
+                // Shuffle using seeded random
+                for (let i = shuffledEmojis.length - 1; i > 0; i--) {
+                    const j = Math.floor(seededRandom() * (i + 1));
+                    [shuffledEmojis[i], shuffledEmojis[j]] = [shuffledEmojis[j], shuffledEmojis[i]];
+                }
+                
+                // Select emojis for this level (only as many as we need)
+                const levelEmojis = shuffledEmojis.slice(0, totalPairs);
+                
+                // Create pairs
+                let cards = [];
+                levelEmojis.forEach((emoji, index) => {
+                    // Each pair gets a unique pairId
+                    cards.push({ emoji, pairId: index });
+                    cards.push({ emoji, pairId: index });
+                });
+                
+                // Shuffle the cards with seeded random
+                for (let i = cards.length - 1; i > 0; i--) {
+                    const j = Math.floor(seededRandom() * (i + 1));
+                    [cards[i], cards[j]] = [cards[j], cards[i]];
+                }
+                
+                return cards;
+            }
+            
+            // Format time as MM:SS
+            function formatTime(seconds) {
+                const isNegative = seconds < 0;
+                const absSeconds = Math.abs(seconds);
+                const mins = Math.floor(absSeconds / 60);
+                const secs = absSeconds % 60;
+                return `${isNegative ? '-' : ''}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // Update the timer display
+            function updateTimerDisplay(seconds) {
+                // Handle negative time (for countdown)
+                const isNegative = seconds < 0;
+                const absSeconds = Math.abs(seconds);
+                const mins = Math.floor(absSeconds / 60);
+                const secs = absSeconds % 60;
+                
+                // Format as MM:SS with negative sign if needed
+                timerEl.textContent = `${isNegative ? '-' : ''}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                // Add warning classes based on time left (only for positive time)
+                if (!isNegative) {
+                    if (seconds <= 10) {
+                        timerEl.classList.add('danger');
+                        timerEl.classList.remove('warning');
+                    } else if (seconds <= 20) {
+                        timerEl.classList.add('warning');
+                        timerEl.classList.remove('danger');
+                    } else {
+                        timerEl.classList.remove('warning', 'danger');
+                    }
+                } else {
+                    // For countdown, no special classes
+                    timerEl.classList.remove('warning', 'danger');
+                }
+            }
+            
+            // Start the game timer
+            function startTimer() {
+                // No timer in hardcore mode
+            }
+            
+            // Handle time running out
+            function handleTimeUp() {
+                // No timer in hardcore mode
+            }
+            
+            // Show all cards for preview, then flip them column by column
+            function showCardsPreview(gridSize) {
+                // Disable interactions during preview
+                isProcessing = true;
+                gameStarted = true;
+                
+                // Show initial message
+                showMessage(`Level ${level} - Memorize the cards!`, 'warning');
+                
+                // Flip all cards face up
+                const allCards = document.querySelectorAll('.card');
+                allCards.forEach(card => {
+                    card.classList.add('flipped');
+                });
+                
+                // Create a countdown, but don't show it in the timer box
+                let countdownSeconds = 5;
+                showMessage(`Memorize the cards! Cards will flip in ${countdownSeconds}...`, 'warning');
+                
+                const countdownInterval = setInterval(() => {
+                    countdownSeconds--;
+                    
+                    if (countdownSeconds > 0) {
+                        // Still counting down
+                        showMessage(`Memorize the cards! Cards will flip in ${countdownSeconds}...`, 'warning');
+                    } else {
+                        // Countdown finished
+                        clearInterval(countdownInterval);
+                        showMessage(`Time's up! Cards flipping...`, 'warning');
+                        
+                        // Start flipping cards face down column by column from right to left
+                        const flipInterval = 70;
+                        
+                        // Start from the rightmost column (gridSize - 1) and go to column 0
+                        for (let col = gridSize - 1; col >= 0; col--) {
+                            setTimeout(() => {
+                                // Find all cards in this column
+                                const columnCards = document.querySelectorAll(`.card[data-col="${col}"]`);
+                                columnCards.forEach(card => {
+                                    card.classList.remove('flipped');
+                                });
+                                
+                                // If this is the last column (leftmost), enable interactions and start game
+                                if (col === 0) {
+                                    isProcessing = false;
+                                    showMessage('Game started! Find the matching pairs!', 'success');
+                                    // Remove timer start
+                                    
+                                    // Update button state (keeping for compatibility)
+                                    startGameBtn.textContent = "Game in Progress";
+                                    startGameBtn.disabled = true;
+                                }
+                            }, (gridSize - 1 - col) * flipInterval);
+                        }
+                    }
+                }, 1000);
+            }
+            
+            // Flip a card
+            function flipCard(card) {
+                // Prevent clicking if the game hasn't started yet, or if we're processing animations, 
+                // or if the card is already flipped/matched
+                if (!gameStarted || 
+                    isProcessing || 
+                    flippedCards.includes(card) || 
+                    matchedPairs.includes(card.dataset.index)) {
+                    return;
+                }
+                
+                // Flip the card
+                card.classList.add('flipped');
+                flippedCards.push(card);
+                
+                // If we have 2 flipped cards, check for a match
+                if (flippedCards.length === 2) {
+                    isProcessing = true;
+                    // Reduced delay from 600ms to 250ms
+                    setTimeout(() => checkMatch(), 250);
+                }
+            }
+            
+            // Check if the two flipped cards match
+            function checkMatch() {
+                const [card1, card2] = flippedCards;
+                
+                // Debug log to help troubleshoot match issues
+                console.log('Checking match between:', 
+                    `Card 1: ${card1.dataset.emoji} (pairId: ${card1.dataset.pairId})`, 
+                    `Card 2: ${card2.dataset.emoji} (pairId: ${card2.dataset.pairId})`);
+                
+                if (card1.dataset.pairId === card2.dataset.pairId) {
+                    // It's a match!
+                    handleMatch(card1, card2);
+                } else {
+                    // Not a match
+                    handleMismatch(card1, card2);
+                }
+                
+                flippedCards = [];
+                isProcessing = false;
+                
+                // Check if the level is complete
+                checkLevelComplete();
+            }
+            
+            // Handle a successful match
+            function handleMatch(card1, card2) {
+                // Add to matched pairs
+                matchedPairs.push(card1.dataset.index, card2.dataset.index);
+                
+                // Add to revealed pairs (using the pairId as identifier)
+                revealedPairs.push(card1.dataset.pairId);
+                
+                // Update score and UI
+                score += 10 * level;
+                pairsFoundEl.textContent = revealedPairs.length;
+                
+                showMessage('Match found! +' + (10 * level) + ' points', 'success');
+                updateUI();
+            }
+            
+            // Check if the level is complete
+            function checkLevelComplete() {
+                const totalCards = document.querySelectorAll('.card').length;
+                
+                if (matchedPairs.length === totalCards) {
+                    // Level complete!
+                    
+                    // Stop the timer
+                    if (gameTimer) {
+                        clearInterval(gameTimer);
+                        gameTimer = null;
+                    }
+                    
+                    if (level === MAX_LEVEL) {
+                        // Game won!
+                        showMessage('Congratulations! You beat all levels!', 'success');
+                        
+                        // Check if we have a new high score
+                        const isNewHighScore = score > highScore;
+                        if (isNewHighScore) {
+                            highScore = score;
+                            highScoreEl.textContent = highScore;
+                            // Show high score celebration first
+                            showHighScoreCelebration(score, () => {
+                                // After closing high score celebration, show victory celebration
+                                setTimeout(() => showVictoryCelebration(score, highScore), 500);
+                            });
+                        } else {
+                            // Just show the victory celebration
+                            showVictoryCelebration(score, highScore);
+                        }
+                    } else {
+                        // Next level
+                        const nextLevel = level + 1;
+                        
+                        // Show the "Start Level X" button
+                        showMessage(`Level ${level} complete! Ready for Level ${nextLevel}?`, 'success');
+                        
+                        // Remove any existing level-start-btn or container that might exist
+                        const existingBtn = document.getElementById('level-start-btn');
+                        if (existingBtn) {
+                            existingBtn.parentNode.removeChild(existingBtn);
+                        }
+                        
+                        const existingContainer = document.getElementById('level-start-btn-container');
+                        if (existingContainer) {
+                            existingContainer.parentNode.removeChild(existingContainer);
+                        }
+                        
+                        // Create a floating container for the button
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.id = 'level-start-btn-container';
+                        
+                        // Create a start next level button 
+                        const startNextLevelBtn = document.createElement('button');
+                        startNextLevelBtn.id = 'level-start-btn';
+                        startNextLevelBtn.textContent = `Start Level ${nextLevel}`;
+                        startNextLevelBtn.style.backgroundColor = '#27ae60';
+                        startNextLevelBtn.style.fontSize = '1.5rem';
+                        startNextLevelBtn.style.padding = '15px 30px';
+                        startNextLevelBtn.style.minWidth = '200px';
+                        startNextLevelBtn.style.borderRadius = '10px';
+                        
+                        startNextLevelBtn.addEventListener('click', () => {
+                            // Hide the button container
+                            buttonContainer.classList.remove('visible');
+                            
+                            // Small delay to allow the fade out animation
+                            setTimeout(() => {
+                                // Remove the button container
+                                if (buttonContainer.parentNode) {
+                                    buttonContainer.parentNode.removeChild(buttonContainer);
+                                }
+                                
+                                level = nextLevel;
+                                setupLevel(true); // Show preview for the next level automatically
+                            }, 300);
+                        });
+                        
+                        // Add the button to the container
+                        buttonContainer.appendChild(startNextLevelBtn);
+                        
+                        // Add the container to the body
+                        document.body.appendChild(buttonContainer);
+                        
+                        // Show the button after a small delay
+                        setTimeout(() => {
+                            buttonContainer.classList.add('visible');
+                        }, 100);
+                    }
+                }
+            }
+            
+            // Display the victory celebration
+            function showVictoryCelebration(score, highScore) {
+                // Create victory modal
+                const victoryModal = document.createElement('div');
+                victoryModal.style.position = 'fixed';
+                victoryModal.style.top = '0';
+                victoryModal.style.left = '0';
+                victoryModal.style.width = '100%';
+                victoryModal.style.height = '100%';
+                victoryModal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Darker background
+                victoryModal.style.display = 'flex';
+                victoryModal.style.flexDirection = 'column';
+                victoryModal.style.alignItems = 'center';
+                victoryModal.style.justifyContent = 'center';
+                victoryModal.style.zIndex = '1000';
+                victoryModal.style.animation = 'fadeIn 0.5s';
+                
+                // Add fade in animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes celebrate {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // Create celebration text
+                const victoryTitle = document.createElement('h1');
+                victoryTitle.textContent = '🏆 ULTIMATE VICTORY! 🏆';
+                victoryTitle.style.color = 'gold';
+                victoryTitle.style.fontSize = '3rem';
+                victoryTitle.style.marginBottom = '20px';
+                victoryTitle.style.textAlign = 'center';
+                victoryTitle.style.animation = 'celebrate 2s infinite';
+                victoryTitle.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.7)';
+                
+                const victoryMessage = document.createElement('p');
+                victoryMessage.innerHTML = `You've conquered all 10 levels of the<br>Emoji Memory Game!<br><br>Final Score: <span style="font-size: 1.5rem; color: #2ecc71;">${score}</span><br>High Score: <span style="font-size: 1.5rem; color: #e74c3c;">${highScore}</span>`;
+                victoryMessage.style.color = 'white';
+                victoryMessage.style.fontSize = '1.5rem';
+                victoryMessage.style.textAlign = 'center';
+                victoryMessage.style.lineHeight = '1.6';
+                victoryMessage.style.marginBottom = '30px';
+                
+                // Create continue button
+                const continueButton = document.createElement('button');
+                continueButton.textContent = 'Excellent!';
+                continueButton.style.padding = '15px 30px';
+                continueButton.style.fontSize = '1.2rem';
+                continueButton.style.backgroundColor = '#27ae60';
+                continueButton.style.color = 'white';
+                continueButton.style.border = 'none';
+                continueButton.style.borderRadius = '5px';
+                continueButton.style.cursor = 'pointer';
+                continueButton.style.marginTop = '20px';
+                
+                continueButton.addEventListener('mouseover', () => {
+                    continueButton.style.backgroundColor = '#219653';
+                    continueButton.style.transform = 'scale(1.05)';
+                });
+                
+                continueButton.addEventListener('mouseout', () => {
+                    continueButton.style.backgroundColor = '#27ae60';
+                    continueButton.style.transform = 'scale(1)';
+                });
+                
+                continueButton.addEventListener('click', () => {
+                    document.body.removeChild(victoryModal);
+                    level = 1;
+                    score = 0;
+                    setupLevel(false);
+                });
+                
+                // Add elements to modal
+                victoryModal.appendChild(victoryTitle);
+                victoryModal.appendChild(victoryMessage);
+                victoryModal.appendChild(continueButton);
+                
+                // Add modal to body after a short delay
+                setTimeout(() => {
+                    document.body.appendChild(victoryModal);
+                }, 1000);
+            }
+            
+            // Display high score celebration
+            function showHighScoreCelebration(score, callback) {
+                // Create high score modal
+                const highScoreModal = document.createElement('div');
+                highScoreModal.style.position = 'fixed';
+                highScoreModal.style.top = '0';
+                highScoreModal.style.left = '0';
+                highScoreModal.style.width = '100%';
+                highScoreModal.style.height = '100%';
+                highScoreModal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Darker background
+                highScoreModal.style.display = 'flex';
+                highScoreModal.style.flexDirection = 'column';
+                highScoreModal.style.alignItems = 'center';
+                highScoreModal.style.justifyContent = 'center';
+                highScoreModal.style.zIndex = '1000';
+                highScoreModal.style.animation = 'fadeIn 0.5s';
+                
+                // Add fade in animation if not already added
+                if (!document.getElementById('celebration-styles')) {
+                    const style = document.createElement('style');
+                    style.id = 'celebration-styles';
+                    style.textContent = `
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        @keyframes celebrate {
+                            0%, 100% { transform: scale(1); }
+                            50% { transform: scale(1.1); }
+                        }
+                        @keyframes rotate {
+                            0% { transform: rotate(-10deg); }
+                            50% { transform: rotate(10deg); }
+                            100% { transform: rotate(-10deg); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                // Create celebration text
+                const highScoreTitle = document.createElement('h1');
+                highScoreTitle.textContent = '🥇 NEW HIGHSCORE! 🥇';
+                highScoreTitle.style.color = 'gold';
+                highScoreTitle.style.fontSize = '3rem';
+                highScoreTitle.style.marginBottom = '20px';
+                highScoreTitle.style.textAlign = 'center';
+                highScoreTitle.style.animation = 'celebrate 2s infinite';
+                highScoreTitle.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.7)';
+                
+                const scoreDisplay = document.createElement('div');
+                scoreDisplay.textContent = score;
+                scoreDisplay.style.color = 'white';
+                scoreDisplay.style.fontSize = '5rem';
+                scoreDisplay.style.fontWeight = 'bold';
+                scoreDisplay.style.textAlign = 'center';
+                scoreDisplay.style.margin = '20px 0';
+                scoreDisplay.style.padding = '10px 30px';
+                scoreDisplay.style.background = 'linear-gradient(45deg, #f1c40f, #f39c12)';
+                scoreDisplay.style.borderRadius = '15px';
+                scoreDisplay.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
+                scoreDisplay.style.animation = 'rotate 3s infinite';
+                
+                const highScoreMessage = document.createElement('p');
+                highScoreMessage.textContent = 'You set a new personal record!';
+                highScoreMessage.style.color = 'white';
+                highScoreMessage.style.fontSize = '1.5rem';
+                highScoreMessage.style.textAlign = 'center';
+                highScoreMessage.style.marginBottom = '30px';
+                
+                // Create continue button
+                const continueButton = document.createElement('button');
+                continueButton.textContent = 'Awesome!';
+                continueButton.style.padding = '15px 30px';
+                continueButton.style.fontSize = '1.2rem';
+                continueButton.style.backgroundColor = '#e74c3c';
+                continueButton.style.color = 'white';
+                continueButton.style.border = 'none';
+                continueButton.style.borderRadius = '5px';
+                continueButton.style.cursor = 'pointer';
+                continueButton.style.marginTop = '20px';
+                
+                continueButton.addEventListener('mouseover', () => {
+                    continueButton.style.backgroundColor = '#c0392b';
+                    continueButton.style.transform = 'scale(1.05)';
+                });
+                
+                continueButton.addEventListener('mouseout', () => {
+                    continueButton.style.backgroundColor = '#e74c3c';
+                    continueButton.style.transform = 'scale(1)';
+                });
+                
+                continueButton.addEventListener('click', () => {
+                    document.body.removeChild(highScoreModal);
+                    if (callback) callback();
+                });
+                
+                // Add elements to modal
+                highScoreModal.appendChild(highScoreTitle);
+                highScoreModal.appendChild(scoreDisplay);
+                highScoreModal.appendChild(highScoreMessage);
+                highScoreModal.appendChild(continueButton);
+                
+                // Add modal to body
+                document.body.appendChild(highScoreModal);
+            }
+            
+            // Handle a mismatch
+            function handleMismatch(card1, card2) {
+                // Flip the mismatched cards back
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    
+                    // Game over immediately on mismatch
+                    showMessage('Mismatch! Game Over!', 'error');
+                    
+                    // Check if we have a new high score
+                    const isNewHighScore = score > highScore;
+                    if (isNewHighScore) {
+                        highScore = score;
+                        highScoreEl.textContent = highScore;
+                        // Show high score celebration
+                        showHighScoreCelebration(score, () => {
+                            // After celebration closed, reset to level 1
+                            level = 1;
+                            score = 0;
+                            setupLevel(false); // No automatic preview
+                        });
+                    } else {
+                        // Remove any existing level-start-btn that might be outside the game board
+                        const existingNextBtn = document.getElementById('level-start-btn');
+                        if (existingNextBtn && existingNextBtn.parentNode !== gameBoard) {
+                            existingNextBtn.parentNode.removeChild(existingNextBtn);
+                        }
+                        
+                        // Reset to level 1
+                        setTimeout(() => {
+                            level = 1;
+                            score = 0;
+                            setupLevel(false); // No automatic preview
+                        }, 1000);
+                    }
+                }, 800); // Increased delay to let players see the mismatch before game over
+            }
+            
+            // Update the showMessage function for the new floating message
+            function showMessage(text, type) {
+                messageEl.textContent = text;
+                messageEl.className = 'message visible';
+                
+                if (type === 'success') {
+                    messageEl.style.backgroundColor = 'rgba(46, 204, 113, 0.8)';
+                } else if (type === 'error') {
+                    messageEl.style.backgroundColor = 'rgba(231, 76, 60, 0.8)';
+                } else if (type === 'warning') {
+                    messageEl.style.backgroundColor = 'rgba(241, 196, 15, 0.8)';
+                }
+                
+                // Clear the previous timer if it exists
+                if (messageEl.hideTimer) {
+                    clearTimeout(messageEl.hideTimer);
+                }
+                
+                // Set a new timer with slightly longer duration for better readability
+                messageEl.hideTimer = setTimeout(() => {
+                    messageEl.classList.remove('visible');
+                }, 2000); // Increased from 1000ms for better readability
+            }
+            
+            // Update UI elements
+            function updateUI() {
+                const gridSize = getGridSizeForLevel(level);
+                levelEl.textContent = `${level}: ${gridSize}x${gridSize}`;
+                scoreEl.textContent = score;
+                highScoreEl.textContent = highScore;
+            }
+            
+            // Button event listeners
+            resetGameBtn.addEventListener('click', () => {
+                // Remove any existing level-start-btn that might be outside the game board
+                const existingNextBtn = document.getElementById('level-start-btn');
+                if (existingNextBtn && existingNextBtn.parentNode !== gameBoard) {
+                    existingNextBtn.parentNode.removeChild(existingNextBtn);
+                }
+                
+                // Create a completely new game (different seed)
+                initGame();
+            });
+            
+            // Modal handling
+            howToPlayBtn.addEventListener('click', () => {
+                rulesModal.style.display = 'flex';
+            });
+            
+            closeModal.addEventListener('click', () => {
+                rulesModal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', (event) => {
+                if (event.target === rulesModal) {
+                    rulesModal.style.display = 'none';
+                }
+            });
+            
+            // Dark mode toggle
+            themeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                themeToggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+                localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            });
+            
+            // Check for saved theme preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                themeToggleBtn.textContent = '☀️';
+            }
+            
+            // Start the game
+            initGame();
+
+            // Create the game grid
+            function createGameGrid(gridSize) {
+                // Reset any previous styles
+                gameBoard.innerHTML = '';
+                gameBoard.style = '';
+                
+                // Add base grid styles
+                gameBoard.style.display = 'grid';
+                gameBoard.style.position = 'relative';
+                
+                // Fixed spacing between cards
+                const gap = 5; // 5px spacing
+                
+                // Adjust card size based on grid size to ensure perfect squares
+                let cardSize;
+                if (level <= 3) { // 2x2, 4x4, 6x6
+                    cardSize = 80;
+                } else if (level <= 5) { // 8x8, 10x10
+                    cardSize = 60;
+                } else if (level <= 7) { // 12x12, 14x14
+                    cardSize = 45;
+                } else { // 16x16, 18x18, 20x20
+                    cardSize = 35;
+                }
+                
+                // Calculate the total width and height the grid will take
+                const totalWidth = cardSize * gridSize + gap * (gridSize - 1);
+                const totalHeight = cardSize * gridSize + gap * (gridSize - 1);
+                
+                // Set the exact dimensions of the game board
+                gameBoard.style.width = `${totalWidth}px`;
+                gameBoard.style.height = `${totalHeight}px`;
+                
+                // Get the pre-generated layout for this level
+                const cards = levelLayouts[level - 1];
+                
+                // Create cards with manual positioning to ensure exact spacing
+                cards.forEach((cardData, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.index = index.toString();
+                    card.dataset.emoji = cardData.emoji;
+                    card.dataset.pairId = cardData.pairId.toString();
+                    
+                    // Calculate row and column for this card
+                    const row = Math.floor(index / gridSize);
+                    const col = index % gridSize;
+                    card.dataset.row = row.toString();
+                    card.dataset.col = col.toString();
+                    
+                    // Calculate the exact position for the card
+                    const left = col * (cardSize + gap);
+                    const top = row * (cardSize + gap);
+                    
+                    // Apply positioning
+                    card.style.position = 'absolute';
+                    card.style.left = `${left}px`;
+                    card.style.top = `${top}px`;
+                    card.style.width = `${cardSize}px`;
+                    card.style.height = `${cardSize}px`;
+                    
+                    const cardFront = document.createElement('div');
+                    cardFront.className = 'card-face card-front';
+                    cardFront.textContent = cardData.emoji;
+                    cardFront.style.fontSize = `${Math.max(cardSize * 0.6, 16)}px`;
+                    
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-face card-back';
+                    cardBack.textContent = '?';
+                    
+                    card.appendChild(cardFront);
+                    card.appendChild(cardBack);
+                    
+                    card.addEventListener('click', () => flipCard(card));
+                    gameBoard.appendChild(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
