@@ -51,7 +51,6 @@
         .subtitle {
             margin-top: 0;
             margin-bottom: 20px;
-            font-style: italic;
             opacity: 0.8;
         }
 
@@ -123,8 +122,9 @@
 
         .game-board-container {
             width: 100%;
-            overflow: hidden;
-            height: 400px; /* Fixed height instead of max-height */
+            overflow: visible; /* Changed from 'hidden' to 'visible' to show all content */
+            height: auto; /* Changed from fixed 400px to auto */
+            min-height: 400px; /* Added min-height instead of fixed height */
             padding: 10px;
             background-color: rgba(0, 0, 0, 0.03);
             border-radius: 10px;
@@ -531,8 +531,8 @@
 </head>
 <body>
     <button id="theme-toggle-btn" title="Toggle dark mode">☀️</button>
-    <h1>☠️ Roguelike Memory Game 🧠</h1>
-    <p class="subtitle">💀 No Mistakes Allowed 💀</p>
+    <h1>💀 Roguelike Memory Game 🧠</h1>
+    <p class="subtitle">☠️ No Mistakes Allowed ☠️</p>
     
     <div class="game-container">
         <div class="game-buttons">
@@ -1458,6 +1458,14 @@
                 // Set the exact dimensions of the game board
                 gameBoard.style.width = `${totalWidth}px`;
                 gameBoard.style.height = `${totalHeight}px`;
+                
+                // Get the game board container and adjust its size if needed
+                const gameBoardContainer = document.querySelector('.game-board-container');
+                
+                // Add some padding to ensure the container is slightly larger than the grid
+                const containerPadding = 20; // 20px padding on each side
+                gameBoardContainer.style.minWidth = `${totalWidth + containerPadding * 2}px`;
+                gameBoardContainer.style.minHeight = `${totalHeight + containerPadding * 2}px`;
                 
                 // Get the pre-generated layout for this level
                 const cards = levelLayouts[level - 1];
